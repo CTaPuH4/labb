@@ -1,0 +1,40 @@
+<div class="card h-100 d-flex flex-column justify-content-between" style="width:20rem;">
+  <div class="card-body d-flex flex-column">
+    {% if tour.image %}
+      <a href="{{ tour.image.url }}" target="_blank">
+        <img class="border-3 rounded img-fluid img-thumbnail mb-2 mx-auto d-block" 
+             style="height:200px; object-fit: cover;" 
+             src="{{ tour.image.url }}">
+      </a>
+    {% else %}
+      <img class="border-3 rounded img-fluid img-thumbnail mb-2 mx-auto d-block" 
+           style="height:200px; object-fit: cover;" 
+           src="/static/img/placeholder.png">
+    {% endif %}
+
+    <h5 class="card-title mt-auto" style="min-height: 50px;">
+      {{ tour.title }}
+    </h5>
+    
+    <h6 class="card-subtitle mb-2 text-muted">
+      <small>
+        {{ tour.location.country }}, {{ tour.location.name }}<br>
+        {% if not tour.location.is_published %}
+          <p class="text-danger">Направление временно недоступно к бронированию</p>
+        {% endif %}
+      </small>
+    </h6>
+
+    {% if tour.location.is_published %}
+      <p class="card-text text-left" style="font-size: 1.2rem; font-weight: 400;">
+        <span class="text-success">От {{ tour.price }} ₽</span>
+      </p>
+    {% endif %}
+  </div>
+
+  {% if tour.location.is_published %}
+    <div class="card-footer text-center mt-auto">
+      <a href="{% url 'tours:detail' tour.pk %}" class="btn btn-primary w-100">Подробнее</a>
+    </div>
+  {% endif %}
+</div>
