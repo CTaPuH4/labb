@@ -3,9 +3,7 @@ from django.core.paginator import Paginator
 from django.db.models import Q
 from django.http import Http404
 from django.shortcuts import get_object_or_404, render  # , redirect
-from django.views.generic import (
-    CreateView, DeleteView, DetailView, ListView, UpdateView
-)
+from django.views.generic import (DetailView, ListView)
 
 from .constants import POSTS_ON_PAGE
 from .models import Tour
@@ -17,8 +15,10 @@ class TourListView(ListView):
     template_name = 'tours/index.html'
 
     def get_queryset(self):
+        self.request.session['username'] = self.request.user.username or None
         queryset = Tour.published_objects.published().order_by('price')
         search_query = self.request.GET.get('q')
+        self.request.session['search_query'] = search_query or None
         if search_query:
             queryset = queryset.filter(Q(title__icontains=search_query))
         return queryset

@@ -15,6 +15,16 @@
     {% bootstrap_css %}
   </head>
   <body>
+    <script>
+      const username = "{{ request.session.username }}";
+      if (username) {
+          sessionStorage.setItem('username', username);
+      }
+      const search_query = "{{ request.session.search_query }}";
+      if (search_query) {
+          sessionStorage.setItem('search_query', search_query);
+      }
+  </script>
     {% include "includes/header.html" %}
     <main>
       <div class="container py-5" style="display:flex; flex-direction: column; padding-left: 0; padding-right: 0;">
