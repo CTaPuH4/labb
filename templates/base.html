@@ -2,35 +2,180 @@
 {% load django_bootstrap5 %}
 <!DOCTYPE html>
 <html lang="ru">
-  <head>
+<head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" href="{% static 'img/fav/favicon.ico' %}" type="image">
     <link rel="icon" type="image/png" sizes="192x192" href="{% static 'img/fav/favicon-192x192.png' %}">
     <link rel="icon" type="image/png" sizes="32x32" href="{% static 'img/fav/favicon-32x32.png' %}">
-    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'img/fav/favicon-16x16.png' %}">
-    <title>
-      {% block title %}{% endblock %}
-    </title>
+    <title>{% block title %}{% endblock %}</title>
     {% bootstrap_css %}
-  </head>
-  <body>
+    <style>
+        .cart-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #007bff;
+            color: white;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            z-index: 1000;
+        }
+        .cart-count {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background-color: red;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 14px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .cart-modal {
+            position: fixed;
+            bottom: 100px;
+            right: 20px;
+            background-color: #fff;
+            width: 500px;
+            max-height: 400px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+            z-index: 1000;
+            padding: 16px;
+            display: none; /* Скрываем по умолчанию */
+        }
+        .cart-modal-header, .cart-modal-footer {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+        }
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .cart-item button {
+            background: none;
+            border: none;
+            color: red;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
     <script>
-      const username = "{{ request.session.username }}";
-      if (username) {
-          sessionStorage.setItem('username', username);
-      }
-      const search_query = "{{ request.session.search_query }}";
-      if (search_query) {
-          sessionStorage.setItem('search_query', search_query);
-      }
-  </script>
+        const username = "{{ request.session.username }}";
+        if (username) {
+            sessionStorage.setItem('username', username);
+        }
+        const search_query = "{{ request.session.search_query }}";
+        if (search_query) {
+            sessionStorage.setItem('search_query', search_query);
+        }
+    </script>
     {% include "includes/header.html" %}
     <main>
-      <div class="container py-5" style="display:flex; flex-direction: column; padding-left: 0; padding-right: 0;">
-        {% block content %}{% endblock %}
-      </div>
+        <div class="container py-5" style="display:flex; flex-direction: column; padding-left: 0; padding-right: 0;">
+            {% block content %}{% endblock %}
+        </div>
     </main>
+
+    <div class="cart-button" onclick="toggleCart()">
+        <span>&#128722;</span>
+        <div class="cart-count" id="cart-count">0</div>
+    </div>
+
+    <div class="cart-modal" id="cart-modal">
+        <div class="cart-modal-header">
+            <span>Корзина</span>
+            <button onclick="toggleCart()">×</button>
+        </div>
+        <div id="cart-items"></div>
+        <div class="cart-modal-footer">
+            <div>Общая стоимость:</div>
+            <div id="total-price">0</div>
+        </div>
+        <div class="cart-modal-footer">
+            <div>Скидка (10%):</div>
+            <div id="discount">0</div>
+        </div>
+        <div class="cart-modal-footer">
+            <div>Итоговая стоимость:</div>
+            <div id="final-price">0</div>
+        </div>
+    </div>
+
     {% include "includes/footer.html" %}
-  </body>
+
+    <script>
+        const cartModal = document.getElementById("cart-modal");
+        let cart = JSON.parse(localStorage.getItem("cart")) || [];
+
+        function toggleCart() {
+            cart = JSON.parse(localStorage.getItem("cart")) || [];
+            updateCartDisplay();
+            cartModal.style.display = (cartModal.style.display === "none" || cartModal.style.display === "") ? "block" : "none";
+        }
+
+        function updateCartDisplay() {
+            const cartItemsContainer = document.getElementById("cart-items");
+            cartItemsContainer.innerHTML = "";
+            let totalPrice = 0;
+            let discount = 0;
+
+            cart.forEach((item, index) => {
+                const itemElement = document.createElement("div");
+                itemElement.className = "cart-item";
+                itemElement.innerHTML = `
+                    <span style="flex: 1;">${item.title}</span>
+                    <span style="margin-right: 10px;">${item.price}</span>
+                    <button onclick="removeItem(${index})">Удалить</button>
+                `;
+                cartItemsContainer.appendChild(itemElement);
+                totalPrice += item.price;
+            });
+
+            discount = totalPrice * 0.1;
+            const finalPrice = totalPrice - discount;
+
+            document.getElementById("total-price").innerText = totalPrice.toFixed(2);
+            document.getElementById("discount").innerText = discount.toFixed(2);
+            document.getElementById("final-price").innerText = finalPrice.toFixed(2);
+            document.getElementById("cart-count").innerText = cart.length;
+        }
+
+        function updateCart() {
+            localStorage.setItem("cart", JSON.stringify(cart));
+            updateCartDisplay();
+        }
+
+        function addItem(name, price) {
+            cart.push({ name, price });
+            updateCart();
+            cartModal.style.display = "block";
+        }
+
+        function removeItem(index) {
+            cart.splice(index, 1);
+            updateCart();
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            cart = JSON.parse(localStorage.getItem("cart")) || [];
+            updateCartDisplay();
+            cartModal.style.display = "none";
+        });
+    </script>
+</body>
 </html>

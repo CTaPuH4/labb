@@ -34,7 +34,30 @@
 
   {% if tour.location.is_published %}
     <div class="card-footer text-center mt-auto">
-      <a href="{% url 'tours:detail' tour.pk %}" class="btn btn-primary w-100">Подробнее</a>
+      <button class="btn btn-primary w-100" onclick="addToCart({{ tour.pk }}, '{{ tour.title }}', {{ tour.price }})">
+        Добавить в корзину
+      </button>
     </div>
   {% endif %}
 </div>
+
+<script>
+  function addToCart(id, title, price) {
+      let cart = JSON.parse(localStorage.getItem('cart')) || [];
+      const existingItem = cart.find(item => item.id === id);
+      if (!existingItem) {
+          cart.push({ id, title, price });
+      }
+      localStorage.setItem('cart', JSON.stringify(cart));
+      updateCartUI();
+  }
+  
+  function updateCartUI() {
+      const cart = JSON.parse(localStorage.getItem('cart')) || [];
+      document.getElementById('cart-count').textContent = cart.length;
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+      updateCartUI();
+  });
+</script>
